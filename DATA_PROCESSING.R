@@ -27,7 +27,7 @@ url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTTME6dAbkFPwF0qo3aLoUWP
 qa_log <- readr::read_csv(paste0(url, "gid=0&single=true&output=csv"), col_types = "c")
 detailed_check <- readr::read_csv(paste0(url, "gid=588362551&single=true&output=csv"), col_types = "c", guess_max = 500000)
 correction_log <- readr::read_csv(paste0(url, "gid=1023075725&single=true&output=csv"), col_types = "c")
-# translation_log <- readr::read_csv(paste0(url, "gid=1671390620&single=true&output=csv"), col_types = "c")
+translation_log <- readr::read_csv(paste0(url, "gid=501075955&single=true&output=csv"), col_types = "c")
 rejection_log <- readr::read_csv(paste0(url, "gid=732403193&single=true&output=csv"), col_types = "c")
 addition_log <- readr::read_csv(paste0(url, "gid=615345402&single=true&output=csv"), col_types = "c")
 # rejection_log <- data.frame()
@@ -81,17 +81,17 @@ source("R/check_relevancy_rules.R")
 source("R/attach_labels.R")
 
 # # apply Translation log ----------------------------------------------------------------------------
-# translation_log %>% count(Tab_Name)
-# # file.edit("R/apply_translation_log.R")
-# source("R/apply_translation_log.R")
-# if(nrow(translation_log_discrep) !=0){
-#   print("Correction Logs not applied -------------------")
-#   correction_log_discrep
-# }
+translation_log %>% count(Tab_Name)
+# file.edit("R/apply_translation_log.R")
+source("R/apply_translation_log.R")
+if(nrow(translation_log_discrep) !=0){
+  print("Correction Logs not applied -------------------")
+  correction_log_discrep
+}
 
 ## Recode ------------------------------------------------------------------------------------------
 # file.edit("R/recode.R") 
-source("R/recode.R") # Update here
+source("R/recode.R") 
 
 # produce qa-backlog -------------------------------------------------------------------------------
 qa_log_sub <- qa_log %>% select(qa_status=QA_Status, KEY=KEY_Unique) %>% mutate(Tool="PDM")
@@ -118,18 +118,18 @@ print(knitr::kable(QA_backlog, format = "simple"))
 
 ## Filter Approved data ----------------------------------------------------------------------------
 pdm_dt$data %>% count(District, Round, qa_status)
-pdm_dt$data %>% count(District, phone_response_short) 
+# pdm_dt$data %>% count(District, phone_response_short) 
 approved_qa_status <- c("Approved") # Temp
 survey_status <- c("Complete")
 # # file.edit("R/filter_approved_data.R")
 source("R/filter_approved_data.R")
 
-## Custom Filter -----------------------------------------------------------------------------------
-pdm_dt_approved$data <- pdm_dt_approved$data %>%
-  filter(Province %in% "Nimroz" & Round %in% 2)
-pdm_dt_approved$children_under2 <- pdm_dt_approved$children_under2 %>% 
-  filter(PARENT_KEY %in% pdm_dt_approved$data$KEY)
-pdm_dt_approved$data %>% count(Province, phone_response_short)
+# ## Custom Filter -----------------------------------------------------------------------------------
+# pdm_dt_approved$data <- pdm_dt_approved$data %>%
+#   filter(Province %in% "Nimroz" & Round %in% 2)
+# pdm_dt_approved$children_under2 <- pdm_dt_approved$children_under2 %>% 
+#   filter(PARENT_KEY %in% pdm_dt_approved$data$KEY)
+# pdm_dt_approved$data %>% count(Province, phone_response_short)
 
 ## Logic check -------------------------------------------------------------------------------------
 # file.edit("R/logic_check.R")
@@ -152,7 +152,7 @@ source("R/check_missing_translation.R") # Temporary filter for QA at the end
 
 # Anonymize Client Data ---------------------------------------------------------------------------
 # file.edit("R/modify_client_data.R")
-source("R/modify_client_data.R")
+# source("R/modify_client_data.R")
 
 # Export -------------------------------------------------------------------------------------------
 ## QA Backlog
@@ -179,7 +179,7 @@ export_datasets(pdm_dt_approved, paste0("output/client_data/MCBP_PDM_Tool_cleane
 ## export additional files
 writexl::write_xlsx(correction_log_list, "output/correction_log.xlsx", format_headers = F) # correction
 writexl::write_xlsx(correction_log_issues, "output/correction_log_issues.xlsx", format_headers = F) # correction log issues
-# writexl::write_xlsx(translation_log_issues, "output/translation_log_issues.xlsx", format_headers = F) # correction log issues
+writexl::write_xlsx(translation_log_issues, "output/translation_log_issues.xlsx", format_headers = F) # correction log issues
 writexl::write_xlsx(correction_log_discrep, "output/correction_log_discrep.xlsx", format_headers = F)
 writexl::write_xlsx(missing_translation_log, "output/untranslated_log.xlsx", format_headers = F)
 writexl::write_xlsx(relevancy_issues, "output/relevancy_issues.xlsx", format_headers = F)

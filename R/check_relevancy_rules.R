@@ -14,18 +14,20 @@ PDM_relevancy_issues <- rbind(
                           left_join(PDM_data_sub, by=c("PARENT_KEY"="KEY")), 
                         PDM_tool_relevancy, sheet_name="children_under2")
 )
-PDM_relevancy_issues <- PDM_relevancy_issues %>% 
-  mutate(key = str_split_fixed(KEY, "/", 2)[,1]) %>%
-  left_join(
-    pdm_dt$data %>% select(Province, Round, phone_response_short, key=KEY)
-  ) %>% 
-  filter(Round %notin% "1")
+
+if(nrow(PDM_relevancy_issues)!=0){
+  PDM_relevancy_issues <- PDM_relevancy_issues %>% 
+    mutate(key = str_split_fixed(KEY, "/", 2)[,1]) %>%
+    left_join(
+      pdm_dt$data %>% select(Province, Round, phone_response_short, key=KEY)
+    ) # %>% filter(Round %notin% "1")
   # filter(phone_response_short%in%"Complete" & question %notin% 
   #          c(
   #            "why_were_you_unable_to_collect_the_cash_audio",
   #            "quality_of_the_growth_monitoring_checkup_elaborate_choices",
   #            "quality_of_the_session_elaborate_choices"
   #          )) 
+}
 
 # Update Select_multiple series columns ------------------------------------------------------------
 ## PDM

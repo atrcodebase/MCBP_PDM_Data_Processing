@@ -7,12 +7,12 @@ pdm_image_cols <- pdm_tool %>% filter(type %in% c("image")) %>% pull(name)
 # Round 2 (QA): audios won't be translated
 pdm_missing_log <- rbind(
   # # Translation
-  # log_questions(data=pdm_dt_approved$data,
-  #               columns=pdm_audio_cols[pdm_audio_cols %in% names(pdm_dt_approved$data)],
-  #               suffix="translation", sheet="data"),
-  # log_questions(data=pdm_dt_approved$children_under2,
-  #               columns=pdm_audio_cols[pdm_audio_cols %in% names(pdm_dt_approved$children_under2)],
-  #               suffix="translation", sheet="children_under2")
+  log_questions(data=pdm_dt_approved$data,
+                columns=pdm_audio_cols[pdm_audio_cols %in% names(pdm_dt_approved$data)],
+                suffix="translation", sheet="data"),
+  log_questions(data=pdm_dt_approved$children_under2,
+                columns=pdm_audio_cols[pdm_audio_cols %in% names(pdm_dt_approved$children_under2)],
+                suffix="translation", sheet="children_under2")
   # Image QA: No image
   )
 # pdm_missing_log <- pdm_missing_log %>% 
