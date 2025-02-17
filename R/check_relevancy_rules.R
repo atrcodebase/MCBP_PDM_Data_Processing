@@ -19,8 +19,8 @@ if(nrow(PDM_relevancy_issues)!=0){
   PDM_relevancy_issues <- PDM_relevancy_issues %>% 
     mutate(key = str_split_fixed(KEY, "/", 2)[,1]) %>%
     left_join(
-      pdm_dt$data %>% select(Province, Round, phone_response_short, key=KEY)
-    ) # %>% filter(Round %notin% "1")
+      pdm_dt$data %>% select(Province, District, Round, phone_response_short, key=KEY)
+    ) %>% filter(Round %in% round & District %in% district)
   # filter(phone_response_short%in%"Complete" & question %notin% 
   #          c(
   #            "why_were_you_unable_to_collect_the_cash_audio",

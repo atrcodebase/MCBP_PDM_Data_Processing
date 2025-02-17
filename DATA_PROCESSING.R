@@ -17,6 +17,8 @@ source("R/custom_functions.R")
 pdm_tool_path <- "input/tools/MCBP+PDM+Tool.xlsx"
 # Survey CTO Download link extension
 download_link <- "https://artftpm.surveycto.com/view/submission-attachment/"
+# District/Round based filters
+district="Warduj"; round=2
 
 # Read data ----------------------------------------------------------------------------------------
 # Post Distribution Monitoring PDM
@@ -124,12 +126,12 @@ survey_status <- c("Complete")
 # # file.edit("R/filter_approved_data.R")
 source("R/filter_approved_data.R")
 
-# ## Custom Filter -----------------------------------------------------------------------------------
-# pdm_dt_approved$data <- pdm_dt_approved$data %>%
-#   filter(Province %in% "Nimroz" & Round %in% 2)
-# pdm_dt_approved$children_under2 <- pdm_dt_approved$children_under2 %>% 
-#   filter(PARENT_KEY %in% pdm_dt_approved$data$KEY)
-# pdm_dt_approved$data %>% count(Province, phone_response_short)
+## Custom Filter -----------------------------------------------------------------------------------
+pdm_dt_approved$data <- pdm_dt_approved$data %>%
+  filter(District %in% district & Round %in% round)
+pdm_dt_approved$children_under2 <- pdm_dt_approved$children_under2 %>%
+  filter(PARENT_KEY %in% pdm_dt_approved$data$KEY)
+pdm_dt_approved$data %>% count(Province, phone_response_short)
 
 ## Logic check -------------------------------------------------------------------------------------
 # file.edit("R/logic_check.R")
@@ -160,10 +162,13 @@ qa_backlog_list <- list(
   unresolved_cases=QA_backlog,
   KEYs=QA_backlog_keys
 )
-correction_log_list <- list(
+qa_tracker_list <- list(
+  qa_log=qa_log,
   correction_log=correction_log, 
-  detailed_check=detailed_check
-  # FCS_Log=fcs_log
+  detailed_check=detailed_check,
+  translation_log=translation_log,
+  addition_log=addition_log,
+  rejection_log=rejection_log
 )
 
 ## export cleaned datasets
@@ -177,7 +182,7 @@ archive_datasets("output/client_data") # Move previous datasets to Archive
 export_datasets(pdm_dt_approved, paste0("output/client_data/MCBP_PDM_Tool_cleaned_approved_", lubridate::today(), ".xlsx"))
 
 ## export additional files
-writexl::write_xlsx(correction_log_list, "output/correction_log.xlsx", format_headers = F) # correction
+writexl::write_xlsx(qa_tracker_list, "output/QA_tracker_logs.xlsx", format_headers = F) # correction
 writexl::write_xlsx(correction_log_issues, "output/correction_log_issues.xlsx", format_headers = F) # correction log issues
 writexl::write_xlsx(translation_log_issues, "output/translation_log_issues.xlsx", format_headers = F) # correction log issues
 writexl::write_xlsx(correction_log_discrep, "output/correction_log_discrep.xlsx", format_headers = F)

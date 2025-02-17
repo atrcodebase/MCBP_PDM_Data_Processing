@@ -74,6 +74,7 @@ fcs_average <- pdm_dt_approved$data %>%
 pdm_sample <- read_excel("input/Zaranj &Warduj_Sample_All_merged.xlsx", guess_max = 5000000)
 # Recode phone numbers in sample and create full_name
 pdm_sample <- pdm_sample %>% 
+  filter(District %in% district & Round %in% round) %>% 
   mutate(resp_pn=str_replace(`Mobile number`, "\\+93", "0"),
          full_name=case_when(
            !is.na(`Principal Father Name`) ~ paste("name: ", tolower(`Principal First Name`), " | father name: ", tolower(`Principal Father Name`)),
@@ -98,8 +99,9 @@ pdm_data <- pdm_dt_approved$data %>%
 # Check respondents not in sample
 new_respondents <- pdm_data %>% 
   filter(resp_pn %notin% pdm_sample$resp_pn) %>% 
-  select(KEY, full_name, resp_pn, phone_response_short) %>% 
+  select(KEY, full_name, resp_pn, phone_response_short, HHH_full_name,	Alternate_Name) %>% 
   mutate(Remark="Respondent Phone number not found in sample!") 
+# new_respondents %>% filter(full_name %notin% pdm_sample$full_name) %>% View
 
 # Manual Checks ------------------------------------------------------------------------------------
 pdm_dt_approved$data %>% janitor::get_dupes(Site_Visit_ID)
