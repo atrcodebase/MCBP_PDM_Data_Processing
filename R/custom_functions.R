@@ -729,3 +729,96 @@ read_xlsx_sheets = function(path){
   return(df)
 } 
 
+
+# Print tool verions
+print_tool_versions <- function(env = .GlobalEnv) {
+  library(readxl)
+  library(stringr)
+  
+  # 1. Get all variable names ending with "_tool_path"
+  tool_vars <- ls(env, pattern = "_tool_path$")
+  
+  if (length(tool_vars) == 0) {
+    message("No *_tool_path variables found.")
+    return(invisible(NULL))
+  }
+  
+  # 2. Convert variable names to actual paths
+  tool_paths <- mget(tool_vars, envir = env)
+  
+  # 3. Process using lapply (no loops)
+  results <- lapply(tool_paths, function(path) {
+    
+    # Extract tool name
+    tool_name <- basename(path)
+    
+    # Read settings sheet
+    settings <- read_excel(path, sheet = "settings")
+    
+    # Extract version
+    version <- if ("version" %in% names(settings)) {
+      as.character(settings$version[1])
+    } else {
+      NA
+    }
+    
+    # Return a list row
+    list(tool = tool_name, version = version)
+  })
+  
+  # 4. Convert to a data frame
+  df <- do.call(rbind, lapply(results, as.data.frame))
+  
+  # 5. Print
+  print(df, row.names = FALSE)
+  
+  invisible(df)
+}
+
+# ## Other Questions
+# flag_other_values <- function(data, tool_path){
+#   other_questions <- read_excel(tool_path, sheet="survey")
+#   other_questions <- other_questions %>% filter(grepl( "_other|_Other", name) & type %in% c("text", "decimal") & name %in% names(data)) %>% pull(name)
+#   numeric_codes <- c(999, 888, 777, 99, 88, 77, 88888, 9, 8, 7, 1:9)
+#   
+#   other_issues <- c()
+#   for(question in other_questions){
+#     
+#     other_issues <- rbind(
+#       other_issues,
+#       data %>% 
+#         filter(eval(get(question)) %in% numeric_codes) %>% 
+#         mutate(issue="Double-check!",
+#                Questions = question,
+#                Values = get(question)) %>%
+#         select(Questions, Values, issue, KEY)
+#     )
+#   }
+#   
+#   return(other_issues)
+# }
+####  Filter numeric values in other questions
+flag_other_cols <- function(data, tool_path, Tool){
+  other_questions <- read_excel(tool_path, sheet="survey")
+  other_questions <- other_questions %>% 
+    filter(grepl( "_other|_Other", name) & type %in% c("text", "decimal") & 
+             name %in% names(data)) %>% pull(name)
+  numeric_codes <- c(999, 888, 777, 99, 88, 77, 88888, 9, 8, 7)
+  
+  other_issues <- c()
+  for(question in other_questions){
+    other_issues <- rbind(
+      other_issues,
+      data %>% 
+        # filter(eval(get(question)) %in% numeric_codes) %>% 
+        filter(grepl("^\\s*(\\d+(\\.\\d+)?)(\\s+\\d+(\\.\\d+)?)*\\s*$", eval(get(question)))) %>% 
+        mutate(issue="Double-check!",
+               Questions = question,
+               Values = get(question),
+               Tool=Tool) %>%
+        select(Questions, Values, issue, KEY, Tool)
+    )
+  }
+  
+  return(other_issues)
+}

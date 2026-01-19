@@ -14,15 +14,39 @@ source("R/custom_functions.R")
 `%notin%` <- Negate(`%in%`)
 
 # Declaring Global Variables -----------------------------------------------------------------------
-pdm_tool_path <- "input/tools/MCBP+PDM+Tool.xlsx"
+# pdm_tool_path <- "input/tools/MCBP+PDM+Tool_phase1.xlsx" # Phase 1: check data first to determine which tool to use
+pdm_tool_path <- "input/tools/MCBP+PDM+Tool.xlsx" # Phase 2
 # Survey CTO Download link extension
 download_link <- "https://artftpm.surveycto.com/view/submission-attachment/"
 # District/Round based filters
-district="Warduj"; round=2
+filter_condition <- "(District %in% 'Giro' & Round %in% 5) | (District %in% 'Tagab' & Round %in% 3) | (District %in% 'Sayad' & Round %in% 5)"
+# filter_condition <- "(District %in% 'Tagab' & Round %in% 3)"
+# pdm_dt$data %>% filter(eval(parse(text=filter_condition))) %>% count(District, Round)
+
+# Check Tool versions against SCTO
+print_tool_versions()
 
 # Read data ----------------------------------------------------------------------------------------
 # Post Distribution Monitoring PDM
-pdm_dt = read_xlsx_sheets("input/raw_data/MCBP Post Distribution Monitoring Tool.xlsx")
+pdm_dt1 = read_xlsx_sheets("input/raw_data/MCBP Post Distribution Monitoring Tool.xlsx")
+pdm_dt2 = read_xlsx_sheets("input/raw_data/MCBP Post Distribution Monitoring Tool - Phase 2.xlsx")
+
+# Merge
+names(pdm_dt1$data)[names(pdm_dt1$data) %notin% names(pdm_dt2$data)]
+names(pdm_dt2$data)[names(pdm_dt2$data) %notin% names(pdm_dt1$data)]
+
+names(pdm_dt1$children_under2)[names(pdm_dt1$children_under2) %notin% names(pdm_dt2$children_under2)]
+names(pdm_dt2$children_under2)[names(pdm_dt2$children_under2) %notin% names(pdm_dt1$children_under2)]
+
+pdm_dt <- pdm_dt1
+pdm_dt$data <- plyr::rbind.fill(pdm_dt1$data, pdm_dt2$data)
+pdm_dt$children_under2 <- plyr::rbind.fill(pdm_dt1$children_under2, pdm_dt2$children_under2)
+
+# Filter to lower the processing time
+pdm_dt$data <- pdm_dt$data %>% filter(eval(parse(text=filter_condition)))
+pdm_dt$children_under2 <- pdm_dt$children_under2 %>% filter(PARENT_KEY %in% pdm_dt$data$KEY)
+
+pdm_dt$data %>% count(District, Round)
 
 # read qa-log, correction log, and translation log -------------------------------------------
 url <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vTTME6dAbkFPwF0qo3aLoUWPwqJhZe5wO8TSgbFqeeAGBOJd0BS88Lr7u44F7lYAcTtkSGcRA7-rwgH/pub?"
@@ -37,8 +61,13 @@ addition_log <- readr::read_csv(paste0(url, "gid=615345402&single=true&output=cs
 # detailed_check %>% filter(Check_Type %in% "image") %>% View
 # fcs_log <- read_excel("input/FCS_log/PDM_FCS_correction_log.xlsx")
 
+# pdm_dt_approved$data %>% count(Province, District)
+# correction_log_issues %>% left_join(qa_log %>% select(Province, KEY=KEY_Unique), by="KEY") %>% View
+# translation_log_issues %>% left_join(qa_log %>% select(Province, KEY=KEY_Unique)) %>% View # Sarepul
+# missing_translation_log %>% left_join(qa_log %>% select(Province, uuid=KEY_Unique)) %>% View
+# missing_translation_QA_log$Audio_log %>% left_join(qa_log %>% select(Province, KEY=KEY_Unique)) %>% View
 # Join QA Status -----------------------------------------------------------------------------------
-count(qa_log, Round, Province, QA_Status)
+count(qa_log, Round, Province, QA_Status) #%>% View
 qa_log_sub <- qa_log %>%
   select(KEY=KEY_Unique, qa_status=QA_Status) %>%
   mutate(qa_status = case_when(
@@ -50,7 +79,7 @@ qa_log_sub <- qa_log %>%
 pdm_dt$data <- pdm_dt$data %>%
   left_join(filter(qa_log_sub), by="KEY") #%>% select(-Tool)
 
-pdm_dt$data %>% count(Round, Province, District, qa_status)
+pdm_dt$data %>% count(Round, Province, District, qa_status) # %>% View
 
 # add new KEYs -------------------------------------------------------------------------------------
 pdm_dt$children_under2 <- pdm_dt$children_under2 %>% 
@@ -61,10 +90,11 @@ pdm_dt$children_under2 <- pdm_dt$children_under2 %>%
       select(PARENT_KEY, KEY=KEY_Unique)
   )
 
+
 # apply correction log -----------------------------------------------------------------------------
 correction_log %>% count(Tab_Name)
 # file.edit("R/apply_cleaning_log.R")
-source("R/apply_cleaning_log.R") # Add Community rep if needed
+source("R/apply_cleaning_log.R") 
 if(nrow(correction_log_discrep) !=0){
   print("Correction Logs not applied -------------------")
   correction_log_discrep
@@ -76,7 +106,12 @@ source("R/remove_rejected_data.R")
 
 # Relevancy check ----------------------------------------------------------------------------------
 # file.edit("R/check_relevancy_rules.R")
-source("R/check_relevancy_rules.R")
+source("R/check_relevancy_rules.R") # check that one rule with may_i_take_a_photo_of_your_tazkira_or_any_available_id
+# 
+relevancy_issues <- relevancy_issues %>% 
+  # Removed questions (changed to calculate)
+  filter(question %notin% c("did_alternate_attend_the_sbcc_sessions_and_receive_the_second_round_cash_payment_disbursement_on_date_of_the_second_round_disbursement_from_the_mcbp_project",
+                            "quality_of_the_growth_monitoring_checkup_elaborate_choices")) 
 
 ## Attach labels -----------------------------------------------------------------------------------
 # file.edit("R/attach_labels.R")
@@ -87,8 +122,8 @@ translation_log %>% count(Tab_Name)
 # file.edit("R/apply_translation_log.R")
 source("R/apply_translation_log.R")
 if(nrow(translation_log_discrep) !=0){
-  print("Correction Logs not applied -------------------")
-  correction_log_discrep
+  print("Translation Logs not applied -------------------")
+  translation_log_discrep
 }
 
 ## Recode ------------------------------------------------------------------------------------------
@@ -101,6 +136,7 @@ qa_log_sub <- qa_log %>% select(qa_status=QA_Status, KEY=KEY_Unique) %>% mutate(
 QA_backlog_keys <- rbind(
   # PDM
   pdm_dt$data %>% 
+    filter(eval(parse(text=filter_condition)) & phone_response_short %in% "Complete") %>% # Complete interviews
     select(SubmissionDate, KEY) %>%
     left_join(qa_log_sub, by = "KEY") %>% 
     mutate(qa_status = case_when(is.na(Tool) ~ "Not_added_in_qa_log", TRUE ~ qa_status), Tool="PDM")
@@ -128,10 +164,11 @@ source("R/filter_approved_data.R")
 
 ## Custom Filter -----------------------------------------------------------------------------------
 pdm_dt_approved$data <- pdm_dt_approved$data %>%
-  filter(District %in% district & Round %in% round)
+  filter(eval(parse(text=filter_condition)))  # filter(District %in% district & Round %in% round)
 pdm_dt_approved$children_under2 <- pdm_dt_approved$children_under2 %>%
   filter(PARENT_KEY %in% pdm_dt_approved$data$KEY)
-pdm_dt_approved$data %>% count(Province, phone_response_short)
+
+pdm_dt_approved$data %>% count(District, Round, phone_response_short)
 
 ## Logic check -------------------------------------------------------------------------------------
 # file.edit("R/logic_check.R")
@@ -139,6 +176,8 @@ source("R/logic_check.R") # Not added yet
 # New Logic checks:
 # questions that says the checkups were done in a different district, compare it with the District
 # Compare the province and district with the name of sample province and district
+# *** Add checks for calculate questions
+
 
 ## Compare dataset responses with the Tools --------------------------------------------------------
 # file.edit("R/dataset_responses_check.R")
@@ -146,7 +185,8 @@ source("R/dataset_responses_check.R")
 
 ## Remove Extra columns ----------------------------------------------------------------------------
 # file.edit("R/remove_extra_columns.R")
-source("R/remove_extra_columns.R") 
+source("R/remove_extra_columns.R") # ** Update Round based columns
+# add a script to view all the removed columns to make sure no important data is removed
 
 # generate data with missing translations ----------------------------------------------------------
 # file.edit("R/check_missing_translation.R")
@@ -155,6 +195,8 @@ source("R/check_missing_translation.R") # Temporary filter for QA at the end
 # Anonymize Client Data ---------------------------------------------------------------------------
 # file.edit("R/modify_client_data.R")
 # source("R/modify_client_data.R")
+# 
+
 
 # Export -------------------------------------------------------------------------------------------
 ## QA Backlog
@@ -170,6 +212,7 @@ qa_tracker_list <- list(
   addition_log=addition_log,
   rejection_log=rejection_log
 )
+log_issues <- list(Correction_Log=correction_log_issues,Translation_Log=translation_log_issues)
 
 ## export cleaned datasets
 check_path("output/cleaned_data") # create the output path
@@ -183,8 +226,8 @@ export_datasets(pdm_dt_approved, paste0("output/client_data/MCBP_PDM_Tool_cleane
 
 ## export additional files
 writexl::write_xlsx(qa_tracker_list, "output/QA_tracker_logs.xlsx", format_headers = F) # correction
-writexl::write_xlsx(correction_log_issues, "output/correction_log_issues.xlsx", format_headers = F) # correction log issues
-writexl::write_xlsx(translation_log_issues, "output/translation_log_issues.xlsx", format_headers = F) # correction log issues
+writexl::write_xlsx(log_issues, "output/correction_log_issues.xlsx", format_headers = F) # correction log issues
+# writexl::write_xlsx(translation_log_issues, "output/translation_log_issues.xlsx", format_headers = F) # correction log issues
 writexl::write_xlsx(correction_log_discrep, "output/correction_log_discrep.xlsx", format_headers = F)
 writexl::write_xlsx(missing_translation_log, "output/untranslated_log.xlsx", format_headers = F)
 writexl::write_xlsx(relevancy_issues, "output/relevancy_issues.xlsx", format_headers = F)

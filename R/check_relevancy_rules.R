@@ -1,12 +1,14 @@
 # Check Relevancy Rules ----------------------------------------------------------------------------
 ## Read
-PDM_tool_relevancy <- read_excel("input/tool_relevancy_rules/MCBP_PDM_relevancy_rules.xlsx")
+PDM_tool_relevancy <- read_excel("input/tool_relevancy_rules/MCBP_PDM_relevancy_rules_p2.xlsx")
 
 ### PDM
 ## Join main columns with repeat sheets
 PDM_data_sub <- pdm_dt$data %>%
   select(Passcode, Surveyor_Name, answered_response, before_this_interview_were_you_aware_that_you_were_registered_as_a_beneficiary,
          respondent_gender, how_many_children_under_2_do_you_have, how_many_children_did_you_have_at_the_time_of_registration, KEY)
+
+# data=pdm_dt$data; tool_relevancy=PDM_tool_relevancy; sheet_name="data"; KEY="KEY"
 
 PDM_relevancy_issues <- rbind(
   check_relevancy_rules(pdm_dt$data, PDM_tool_relevancy, sheet_name="data"),
@@ -20,7 +22,9 @@ if(nrow(PDM_relevancy_issues)!=0){
     mutate(key = str_split_fixed(KEY, "/", 2)[,1]) %>%
     left_join(
       pdm_dt$data %>% select(Province, District, Round, phone_response_short, key=KEY)
-    ) %>% filter(Round %in% round & District %in% district)
+    ) %>% filter(eval(parse(text=filter_condition)))
+  # filter(Round %in% round & District %in% district | (District %in% 'Sayad' & Round %in% 1))
+  
   # filter(phone_response_short%in%"Complete" & question %notin% 
   #          c(
   #            "why_were_you_unable_to_collect_the_cash_audio",
@@ -28,6 +32,14 @@ if(nrow(PDM_relevancy_issues)!=0){
   #            "quality_of_the_session_elaborate_choices"
   #          )) 
 }
+# PDM_relevancy_issues %>% count(District, Round)
+
+# # QA: Question removed and changed to calculate in the tool
+# PDM_relevancy_issues <- PDM_relevancy_issues %>% filter(question %notin% 
+#                                                           c("why_were_you_unable_to_collect_the_cash_audio", 
+#                                                             "why_not_satisfied_audio",
+#                                                             "why_not_satisfied_translation"
+#                                                           )) # Effective from Kamdesh R5 onward
 
 # Update Select_multiple series columns ------------------------------------------------------------
 ## PDM

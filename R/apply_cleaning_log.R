@@ -10,6 +10,7 @@ correction_log_filtered <- correction_log %>%
     Question %in% sm_variables ~ str_replace_all(New_Value, "-|,|  | - ", " ") %>% str_squish(),
     TRUE ~ str_squish(New_Value)
   ),
+  Question=str_squish(Question),
   Tool = "PDM", Log_type = "Correction_Log" # QA: logs only added for IE & not representative
   # KEY= case_when(
   #   is.na(KEY) & !is.na(`Full_ KEY`) ~ str_squish(`Full_ KEY`),
@@ -20,10 +21,21 @@ correction_log_filtered <- correction_log %>%
          new_value=New_Value, QAed_by=`Logged by:`, Remarks, Log_type)
 
 # New Log: should be applied before correction log
+problematic_questions <- c(
+  "doortag_photo", "doortag_photo2",
+  "can_you_please_confirm_through_audio_or_by_writing_state_your_name_your_role_in_the_community_and_your_confirmation_you_do_not_know_beneficiary_name_daughter_of_beneficiary_father_name_or_her_household_audio",
+  "could_you_please_explain_and_confirm_either_with_signatures_or_an_audio_recording_that_beneficiary_and_registered_alternate_did_not_receive_the_cash_payment_disbursement_on_date_of_disbursement_from_the_mcbp_project_audio"
+)
 detailed_check_log <- detailed_check %>% 
   mutate(Question=case_when(
-    Check_Type %in% c("image") ~ paste0(Question, "_qa_status"),
-    Check_Type %in% c("audio") ~ paste0(Question,"_translation"),
+    Check_Type %in% c("image") & Question %notin% problematic_questions ~ paste0(Question, "_qa_status"),
+    Check_Type %in% c("audio") & Question %notin% problematic_questions ~ paste0(Question,"_translation"),
+    Question %in% c("doortag_photo") ~ "doortag_photo_QA",
+    Question %in% c("doortag_photo2") ~ "doortag_photo2_QA",
+    Question %in% c("can_you_please_confirm_through_audio_or_by_writing_state_your_name_your_role_in_the_community_and_your_confirmation_you_do_not_know_beneficiary_name_daughter_of_beneficiary_father_name_or_her_household_audio") ~ 
+      "can_you_please_confirm_through_audio_or_by_writing_state_your_name_your_role_in_the_community_and_your_confirmation_you_do_not_know_beneficiary_name_daughter_of_beneficiary_father_name_or_her_household_translation",
+    Question %in% c("could_you_please_explain_and_confirm_either_with_signatures_or_an_audio_recording_that_beneficiary_and_registered_alternate_did_not_receive_the_cash_payment_disbursement_on_date_of_disbursement_from_the_mcbp_project_audio") ~ 
+      "could_you_please_explain_and_confirm_either_with_signatures_or_an_audio_recording_that_beneficiary_and_registered_alternate_did_not_receive_the_cash_payment_disbursement_on_date_of_disbursement_from_the_mcbp_project_translation",
     TRUE ~ as.character(Question)
   ),
   New_Value=case_when(
@@ -64,7 +76,10 @@ correction_log_issues <- correction_log_filtered %>%
     Check_Type %in% "image" ~ str_remove(question, "_qa_status$"),
     Check_Type %in% "audio" ~ str_remove(question, "_translation$"),
     TRUE ~ question
-  ))
+  )) %>% 
+  left_join(pdm_dt$data %>% select(Province, District, Round, key=KEY)) %>% 
+  filter(eval(parse(text=filter_condition)))
+
 
 correction_log_filtered <- correction_log_filtered %>% 
   # filter(is.na(issue) & duplicates == FALSE) # Keeping duplicates for now

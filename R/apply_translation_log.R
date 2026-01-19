@@ -1,11 +1,11 @@
 # clean the translation log -----------------------------------------------------------------
-options(scipen = 999)
 tabs <- c("data", "children_under2")
 PDM_audio_cols <- read_excel(pdm_tool_path, "survey", guess_max = 100000) %>% filter(type %in% c("audio")) %>% pull(name) 
 
 ## Filter empty rows
 translation_log_filtered <- translation_log %>%
-  select(KEY=KEY_Unique, Tab_Name, question=Question, old_value, new_value=New_Value)
+  mutate(key = str_split_fixed(KEY_Unique, "/", 2)[,1]) %>%
+  select(key, KEY=KEY_Unique, Tab_Name, question=Question, old_value, new_value=New_Value)
 
 # Identify issues
 translation_log_filtered <- translation_log_filtered %>% 
@@ -26,10 +26,9 @@ translation_log_issues <- translation_log_filtered %>%
   arrange(KEY, question)
 
 # Filter 
-# translation_log_issues <- translation_log_issues %>% 
-#   left_join(
-#     select(qa_log, key=KEY_Unique, Province)
-#   ) %>% filter(Province %notin% "Nimroz")
+translation_log_issues <- translation_log_issues %>%
+  left_join(pdm_dt$data %>% select(Province, District, Round, key=KEY), by="key") %>% 
+  filter(eval(parse(text=filter_condition)))
 
 translation_log_filtered <- translation_log_filtered %>% 
   # filter(is.na(issue) & duplicates == FALSE) # Keeping duplicates for now
