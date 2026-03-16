@@ -822,3 +822,40 @@ flag_other_cols <- function(data, tool_path, Tool){
   
   return(other_issues)
 }
+
+####  Filter numeric values in other questions
+flag_numeric_values <- function(data, tool_path, Tool_name){
+  tool <- read_excel(tool_path, sheet="survey")
+  numeric_codes <- c(99, 88, 77, 999, 888, 777, 88888, 77777, 99999)
+  
+  # Other Questions
+  other_questions <- tool %>% 
+    filter(((grepl( "_other|_Other", name) & type %in% c("text", "decimal"))) & name %in% names(data)) %>% pull(name)
+  # Numeric questions
+  numeric_questions <- tool %>% filter(type%in%c("integer", "decimal") & name %in% names(data)) %>% pull(name)
+  
+  
+  numeric_issues <- c()
+  for(question in c(other_questions, numeric_questions)){
+    
+    if(question %in% other_questions){
+      flagged_issues <- data %>% 
+        filter(grepl("^\\s*(\\d+(\\.\\d+)?)(\\s+\\d+(\\.\\d+)?)*\\s*$", eval(get(question)))) %>% 
+        mutate(issue="Numbers in Other question!")
+    } else {
+      flagged_issues <- data %>% 
+        filter(as.numeric(eval(get(question))) %in% numeric_codes) %>% 
+        mutate(issue="Check if it's actual number or a code!")
+    }
+    
+    # Merge
+    numeric_issues <- rbind(
+      numeric_issues,
+      flagged_issues %>% 
+        mutate(Questions = question, Values = get(question), Tool=Tool_name) %>%
+        select(Questions, Values, issue, KEY, Tool)
+    )
+  }
+  
+  return(numeric_issues)
+}

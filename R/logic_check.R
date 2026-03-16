@@ -129,11 +129,11 @@ fcs_average <- pdm_dt_approved$data %>%
             ) %>% ungroup()
 # write.xlsx(fcs_average, "test2.xlsx")
 
-## Other Questions
+#### Flag Numeric values in Other/Numeric Questions
 pdm_logical_issues <- bind_rows(
   pdm_logical_issues,
-  flag_other_cols(pdm_dt_approved$data, pdm_tool_path, "PDM"),
-  flag_other_cols(pdm_dt_approved$children_under2, pdm_tool_path, "PDM")
+  flag_numeric_values(pdm_dt_approved$data, pdm_tool_path, Tool="PDM"),
+  flag_numeric_values(pdm_dt_approved$children_under2, pdm_tool_path, Tool="PDM_children_under2")
   
 )
 

@@ -103,11 +103,13 @@ pdm_dt$children_under2 <- pdm_dt$children_under2 %>%
 pdm_dt$children_under2 <- pdm_dt$children_under2 %>% 
   mutate(please_specify_the_date=case_when(
     KEY %in% "uuid:bb8e658d-9530-461d-ad15-fd34b2c4ca03/Passcode_correct-Valid_User-form_questions-beneficiary_registered-section_8-children_under2[1]" ~ as.Date("2024-10-01"),
+    KEY %in% "uuid:7ed56e77-23f2-47ba-b36b-523c43084937/Passcode_correct-Valid_User-form_questions-beneficiary_registered-section_8-children_under2[1]" ~ as.Date(NA),
     TRUE ~ please_specify_the_date
   ))
 # Exclude from log    
 correction_log_filtered <- correction_log_filtered %>% 
-  filter(!(KEY %in% "uuid:bb8e658d-9530-461d-ad15-fd34b2c4ca03/Passcode_correct-Valid_User-form_questions-beneficiary_registered-section_8-children_under2[1]" & 
+  filter(!(KEY %in% c("uuid:bb8e658d-9530-461d-ad15-fd34b2c4ca03/Passcode_correct-Valid_User-form_questions-beneficiary_registered-section_8-children_under2[1]",
+                      "uuid:7ed56e77-23f2-47ba-b36b-523c43084937/Passcode_correct-Valid_User-form_questions-beneficiary_registered-section_8-children_under2[1]") & 
            question %in% "please_specify_the_date"))
 
 

@@ -19,8 +19,11 @@ pdm_tool_path <- "input/tools/MCBP+PDM+Tool.xlsx" # Phase 2
 # Survey CTO Download link extension
 download_link <- "https://artftpm.surveycto.com/view/submission-attachment/"
 # District/Round based filters
-filter_condition <- "(District %in% 'Giro' & Round %in% 5) | (District %in% 'Tagab' & Round %in% 3) | (District %in% 'Sayad' & Round %in% 5)"
-# filter_condition <- "(District %in% 'Tagab' & Round %in% 3)"
+# filter_condition <- "(District %in% 'Giro' & Round %in% 5) | (District %in% 'Tagab' & Round %in% 3)"
+# filter_condition <- "(District %in% 'Tagab' & Round %in% 5)"
+# filter_condition <- "(District %in% 'Warduj' & Round %in% 6)"
+filter_condition <- "(District %in% 'Zaranj' & Round %in% 6)"
+
 # pdm_dt$data %>% filter(eval(parse(text=filter_condition))) %>% count(District, Round)
 
 # Check Tool versions against SCTO
@@ -90,7 +93,7 @@ pdm_dt$children_under2 <- pdm_dt$children_under2 %>%
       select(PARENT_KEY, KEY=KEY_Unique)
   )
 
-
+# correction_log <- correction_log %>% filter(Question %notin% "please_specify_the_date")
 # apply correction log -----------------------------------------------------------------------------
 correction_log %>% count(Tab_Name)
 # file.edit("R/apply_cleaning_log.R")
@@ -111,7 +114,9 @@ source("R/check_relevancy_rules.R") # check that one rule with may_i_take_a_phot
 relevancy_issues <- relevancy_issues %>% 
   # Removed questions (changed to calculate)
   filter(question %notin% c("did_alternate_attend_the_sbcc_sessions_and_receive_the_second_round_cash_payment_disbursement_on_date_of_the_second_round_disbursement_from_the_mcbp_project",
-                            "quality_of_the_growth_monitoring_checkup_elaborate_choices")) 
+                            "quality_of_the_growth_monitoring_checkup_elaborate_choices",
+                            "why_were_you_unable_to_collect_the_cash_audio",
+                            "why_were_you_unable_to_collect_the_cash_audio_translation")) 
 
 ## Attach labels -----------------------------------------------------------------------------------
 # file.edit("R/attach_labels.R")
