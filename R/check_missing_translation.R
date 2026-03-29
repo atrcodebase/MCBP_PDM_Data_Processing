@@ -93,20 +93,23 @@ if(nrow(missing_translation_log)!=0){
 
 
 ## Export List -------------------------------------------------------------------------------------
-missing_translation_QA_log <- rbind(
+if(nrow(pdm_missing_log) > 0){
+  missing_translation_QA_log <- rbind(
   pdm_missing_log %>% mutate(Tool = "PDM")
   )
+  ## Separate translation and image logs
+  missing_translation_QA_log_sub <- missing_translation_QA_log %>% 
+    filter(question_type == "translation")
+  
+  # Export list
+  missing_translation_QA_log <- list(
+    Image_log=filter(missing_translation_QA_log, question_type=="qa_status"),
+    Audio_log=missing_translation_QA_log_sub
+  )
+} else {
+  missing_translation_QA_log=data.frame()
+}
 
-
-## Separate translation and image logs
-missing_translation_QA_log_sub <- missing_translation_QA_log %>% 
-  filter(question_type == "translation")
-
-# Export list
-missing_translation_QA_log <- list(
-  Image_log=filter(missing_translation_QA_log, question_type=="qa_status"),
-  Audio_log=missing_translation_QA_log_sub
-)
 
 # remove extra objects -----------------------------------------------------------------------------
 rm(pdm_image_cols, pdm_audio_cols, missing_translation_QA_log_sub)

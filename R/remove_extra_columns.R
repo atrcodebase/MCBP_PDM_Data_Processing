@@ -32,8 +32,8 @@ pdm_dt_approved$children_under2 <- pdm_dt_approved$children_under2 %>%
 
 
 
-# Remove round 1 columns
-if(all(unique(pdm_dt_approved$data$Round) %in% 1)){
+# Remove round 1 and 6 columns
+if(all(unique(pdm_dt_approved$data$Round) %in% c(1, 6))){
   SBCC_round_cols_sub <- SBCC_round_cols %>% filter(Round %notin% 1) %>% pull(questions)
   
   pdm_dt_approved$data <- pdm_dt_approved$data %>% 
@@ -73,13 +73,6 @@ if(all(unique(pdm_dt_approved$data$Round) %in% 5)){
     select(-all_of(SBCC_round_cols_sub))
 }
 
-# Remove round 6 columns
-if(all(unique(pdm_dt_approved$data$Round) %in% 6)){
-  SBCC_round_cols_sub <- SBCC_round_cols %>% filter(Round %notin% 6) %>% pull(questions)
-  
-  pdm_dt_approved$data <- pdm_dt_approved$data %>% 
-    select(-all_of(SBCC_round_cols_sub))
-}
 
 # Remove in-person columns from Phone survey
 if(all(unique(pdm_dt_approved$data$interview_type) %in% "Phone interview")){

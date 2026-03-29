@@ -19,10 +19,7 @@ pdm_tool_path <- "input/tools/MCBP+PDM+Tool.xlsx" # Phase 2
 # Survey CTO Download link extension
 download_link <- "https://artftpm.surveycto.com/view/submission-attachment/"
 # District/Round based filters
-# filter_condition <- "(District %in% 'Giro' & Round %in% 5) | (District %in% 'Tagab' & Round %in% 3)"
-# filter_condition <- "(District %in% 'Tagab' & Round %in% 5)"
-# filter_condition <- "(District %in% 'Warduj' & Round %in% 6)"
-filter_condition <- "(District %in% 'Zaranj' & Round %in% 6)"
+filter_condition <- "(District %in% 'Warduj' & Round %in% 6) | (District %in% 'Zaranj' & Round %in% 6)"
 
 # pdm_dt$data %>% filter(eval(parse(text=filter_condition))) %>% count(District, Round)
 
@@ -117,7 +114,6 @@ relevancy_issues <- relevancy_issues %>%
                             "quality_of_the_growth_monitoring_checkup_elaborate_choices",
                             "why_were_you_unable_to_collect_the_cash_audio",
                             "why_were_you_unable_to_collect_the_cash_audio_translation")) 
-
 ## Attach labels -----------------------------------------------------------------------------------
 # file.edit("R/attach_labels.R")
 source("R/attach_labels.R")
@@ -201,6 +197,18 @@ source("R/check_missing_translation.R") # Temporary filter for QA at the end
 # file.edit("R/modify_client_data.R")
 # source("R/modify_client_data.R")
 # 
+
+# pdm_dt_approved$children_under2 <- pdm_dt_approved$children_under2 %>% 
+#   mutate(where_did_you_do_the_sessions_other=case_when(
+#     KEY %in% "uuid:34e04719-c4ab-44bc-9ce3-b9b149c3c160/Passcode_correct-Valid_User-form_questions-beneficiary_registered-section_8-children_under2[1]" ~ "Distribution Site",
+#     TRUE ~ where_did_you_do_the_sessions_other
+#   )) 
+
+# pdm_dt_approved$data <- pdm_dt_approved$data %>%
+#   mutate(can_you_please_tell_me_what_malnutrition_is_choices_other=case_when(
+#     KEY %in% "uuid:6f1393a9-1677-4f67-aa1b-2e80a0af1c87" ~ NA_character_,
+#     TRUE ~ can_you_please_tell_me_what_malnutrition_is_choices_other
+#   ))
 
 
 # Export -------------------------------------------------------------------------------------------
