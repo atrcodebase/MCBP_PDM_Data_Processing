@@ -25,7 +25,9 @@ audio_cols_diff <- list(
   "can_you_please_tell_me_why_complementary_feeding_is_important_audio"=
     "can_you_please_tell_me_why_complementary_feeding_is_important_translation",
   "can_you_please_tell_me_what_will_happen_if_the_child_is_not_fed_properly_audio"=
-    "can_you_please_tell_me_what_will_happen_if_the_child_is_not_fed_properly_translation"
+    "can_you_please_tell_me_what_will_happen_if_the_child_is_not_fed_properly_translation",
+  "can_you_please_tell_me_why_its_important_to_invest_in_your_family_health_audio"=
+    "can_you_please_tell_me_why_its_important_to_invest_in_your_family_health_translation"
 )
 image_cols_diff <- list(
   "doortag_photo"="doortag_photo_QA",
